@@ -15,6 +15,9 @@ I also recommend setting up a rule in your email inbox that auto-deletes order c
 2. Give it the full path to your Firefox exe (it'll show an example)
 3. It'll take you to the Amazon login page - when signing in remember to tick "Keep me signed in" so the script doesn't fail halfway through.
 4. Once logged in, press any key in the console and it'll start!
+5. When the program finishes, it'll ask you to press a key which then allows it to cleanly close the browser. 
+
+Unless absolutely necessary, please avoid closing the browser/console yourself. Use the "Press any key to cancel/finish" feature detailed below.
 
 ### Cancelling the script midway
 At any time you can press a key in the console to cancel the script; it'll save the latest page it was on to start again from where you left off.
