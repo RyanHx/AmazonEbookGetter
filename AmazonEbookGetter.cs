@@ -17,23 +17,28 @@ namespace AmazonEbookGetter
         double MoneySaved;
 
         /// <summary>
-        /// Starts the Selenium Firefox driver, allows the user to sign in to their Amazon account, then navigate to <paramref name="currUrl"/>.
+        /// Starts the Selenium Firefox driver, allows the user to sign in to their Amazon account, then navigate to latest url.
         /// </summary>
         /// <param name="firefoxDir">Path to Firefox exe</param>
-        /// <param name="currUrl">Latest page URL</param>
-        public bool StartBrowser(string firefoxDir)
+        public void StartBrowser(string firefoxDir)
         {
             driver = new FirefoxDriver(Environment.CurrentDirectory, new FirefoxOptions() { BrowserExecutableLocation = firefoxDir });
             Login();
-            if (!TryGetUrl(out var url))
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Finding page url...");
+            if (!TryGetUrl(out string url))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No url found, press any key to cleanly close the browser...");
-                return false;                
+                Console.WriteLine("No url file found, using default...");
+                url = "https://www.amazon.com/s?rh=n%3A133140011%2Cn%3A%212334093011%2Cn%3A%212334155011%2Cn%3A%2120795439011%2Cn%3A20102661011&page=2&qid=1586538576&ref=lp_20102661011_pg_2";
+                SaveLatestUrl(url);
+            }
+            else
+            {
+                Console.WriteLine("Url file found, using latest...");
             }
             driver.Url = url;
             LinksList = new List<string>();
-            return true;
+            return;
         }
 
         /// <summary>
