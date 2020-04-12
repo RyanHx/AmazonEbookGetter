@@ -5,7 +5,7 @@ Right now there's a sale on Amazon.com whereby hundreds of ebooks have been made
 
 ## Prerequisites 
 1. You'll need Firefox installed
-2. You may need the latest .NET Framework runtime
+2. You may need the latest .NET Framework runtime - https://dotnet.microsoft.com/download/dotnet-framework/net48
 3. This is only for users of the .co.uk Amazon domain!
 
 ## Usage
