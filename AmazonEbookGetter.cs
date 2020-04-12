@@ -1,0 +1,205 @@
+﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Firefox;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading;
+
+namespace AmazonEbookGetter
+{
+    public class AmazonEbookGetter
+    {
+        IWebDriver driver;
+        List<string> LinksList;
+        double MoneySaved;
+
+        /// <summary>
+        /// Starts the Selenium Firefox driver, allows the user to sign in to their Amazon account, then navigate to <paramref name="currUrl"/>.
+        /// </summary>
+        /// <param name="firefoxDir">Path to Firefox exe</param>
+        /// <param name="currUrl">Latest page URL</param>
+        public bool StartBrowser(string firefoxDir)
+        {
+            driver = new FirefoxDriver(Environment.CurrentDirectory, new FirefoxOptions() { BrowserExecutableLocation = firefoxDir });
+            Login();
+            if (!TryGetUrl(out var url))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No url found, press any key to cleanly close the browser...");
+                return false;                
+            }
+            driver.Url = url;
+            LinksList = new List<string>();
+            return true;
+        }
+
+        /// <summary>
+        /// Takes the user to the login page and asks for confirmation that they are signed in
+        /// </summary>
+        private void Login()
+        {
+            driver.Url = @"https://www.amazon.co.uk";
+            driver.FindElement(By.CssSelector("#nav-link-accountList")).Click();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Please sign in to your Amazon UK account (remember to tick 'Keep me signed in' to allow the script to run as long as it needs to)");
+            Console.WriteLine("Press any key after signing in...");
+            Console.ReadKey(true);
+        }
+
+        /// <summary>
+        /// Main loop. Finds & 'buys' free ebooks, continues to next page, saves latest page url and repeats.
+        /// </summary>
+        /// <param name="token">Token checked for user cancellation</param>
+        public void Run(CancellationToken token)
+        {
+            while (true)
+            {               
+                Console.ForegroundColor = ConsoleColor.Yellow;                
+                Console.WriteLine("Press any key to cancel...");
+                LinksList.Clear();
+                FindEbooks();
+                GetEbooks(token);
+                if (token.IsCancellationRequested)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Task cancelled");
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.WriteLine($"Money saved: {MoneySaved.ToString("C", CultureInfo.CurrentCulture)}");
+                    return;
+                }
+                TryGetUrl(out var currUrl);
+                driver.Url = currUrl;
+                if (FindNextPageButton(out var nextUrl))
+                {
+                    driver.Url = nextUrl;
+                    Console.WriteLine($"Saving latest url...");
+                    SaveLatestUrl(nextUrl);
+                }
+                else
+                {
+                    break;
+                }
+            };
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("No more pages!");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"Money saved: {MoneySaved.ToString("C", CultureInfo.CurrentCulture)}");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Press any key to finish...");
+        }
+
+        /// <summary>
+        /// Retrieves all ebook URLs from current results page
+        /// </summary>
+        private void FindEbooks()
+        {
+            var EbookElementList = driver.FindElement(By.CssSelector("div.s-result-list:nth-child(1)")).FindElements(By.XPath("./div"));
+            foreach (var ebook in EbookElementList)
+            {
+                if (EbookElementList.IndexOf(ebook) != EbookElementList.Count - 1)
+                {
+                    var link = ebook.FindElement(By.XPath($"./ div / span / div / div / div[2] / div[2] / div / div[1] / div / div / div[1] / h2 / a")).GetAttribute("href");
+                    LinksList.Add(link.Replace(".com", ".co.uk"));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 'Buys' all free ebooks in LinksList
+        /// </summary>
+        private void GetEbooks(CancellationToken token)
+        {
+            foreach (var EbookLink in LinksList)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                Stopwatch sw = Stopwatch.StartNew();
+                while (sw.Elapsed < TimeSpan.FromSeconds(5))
+                {
+                    continue;
+                }
+                driver.Url = EbookLink;
+                try
+                {
+                    var KindlePrice = driver.FindElement(By.CssSelector(".kindle-price")).FindElement(By.XPath("./td[2]/span")).Text;
+                    if (KindlePrice.Equals("£0.00"))
+                    {
+                        try
+                        {
+                            string saved = driver.FindElement(By.CssSelector(".kindle-price")).FindElement(By.XPath("./td[2]/p")).Text;
+                            saved = Regex.Match(saved, @"\d+[.]\d+").Value;
+                            if (double.TryParse(saved, out double amount))
+                            {
+                                MoneySaved += amount;
+                            }
+                        }
+                        catch (Exception) { };
+                        driver.FindElement(By.CssSelector("#one-click-button")).Click();
+                    }
+                }
+                catch (NoSuchElementException)
+                {
+                    continue;
+                }
+            }
+        }
+
+        private bool FindNextPageButton(out string nextUrl)
+        {
+            try
+            {
+                nextUrl = driver.FindElement(By.CssSelector(".a-last")).FindElement(By.XPath("./a")).GetAttribute("href");
+                return true;
+            }
+            catch (NoSuchElementException)
+            {
+                nextUrl = string.Empty;
+                return false;
+            }
+        }
+
+        public void CloseBrowser()
+        {
+            driver.Quit();
+        }
+
+        public void SaveLatestUrl(string url)
+        {
+            string path = Environment.CurrentDirectory + "\\url.txt";
+            File.WriteAllText(path, url.Trim());
+        }
+
+        /// <summary>
+        /// Checks if url.txt exists. If it does set <paramref name="url"/> to the contents of the file and return true. Else return false and assign an empty string to <paramref name="url"/>
+        /// </summary>
+        /// <param name="url">Set to the contents of url.txt, or an empty string if the file doesn't exist</param>
+        /// <returns>True if url.txt is found, false otherwise.</returns>
+        public bool TryGetUrl(out string url)
+        {
+            string path = Environment.CurrentDirectory + "\\url.txt";
+            if (File.Exists(path))
+            {
+                var temp = File.ReadAllText(path).Trim();
+                if(Uri.IsWellFormedUriString(temp, UriKind.Absolute))
+                {
+                    url = temp;
+                    return true;
+                }
+                else
+                {
+                    url = "https://www.amazon.com/s?rh=n%3A133140011%2Cn%3A%212334093011%2Cn%3A%212334155011%2Cn%3A%2120795439011%2Cn%3A20102661011&page=2&qid=1586538576&ref=lp_20102661011_pg_2";
+                    SaveLatestUrl(url);
+                    return true;
+                }
+                
+            }
+            url = string.Empty;
+            return false;
+        }
+    }
+}
