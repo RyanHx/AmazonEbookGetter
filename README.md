@@ -1,5 +1,5 @@
 # Amazon Ebook Getter
-Script that 'buys' all Amazon.co.uk versions of the free ebooks currently on sale from Amazon.com
+Script that 'buys' all Amazon.co.uk versions of the free ebooks currently on sale from Amazon.com, totalling in nearly £5000 of content!
 
 Right now there's a sale on Amazon.com whereby hundreds of ebooks have been made available for free. Rather than going through each ebook and buying their .co.uk counterpart, I made a script to do it for me.
 
@@ -8,6 +8,7 @@ Right now there's a sale on Amazon.com whereby hundreds of ebooks have been made
 2. You may need the latest .NET Framework runtime - https://dotnet.microsoft.com/download/dotnet-framework/net48
 3. This is only for users of the .co.uk Amazon domain!
 
+I also recommend setting up a rule in your email inbox that auto-deletes order confirmations from Amazon - you'll end up with over 800 ebooks in total, each with their own confirmation email. 
 ## Usage
 1. Open AmazonEbookGetter.exe
 2. Give it the full path to your Firefox exe (it'll show an example)
