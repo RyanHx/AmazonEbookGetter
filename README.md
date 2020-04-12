@@ -6,7 +6,7 @@ Right now there's a sale on Amazon.com whereby hundreds of ebooks have been made
 Any ebook priced over £0 it will skip!
 
 ## Prerequisites
-Download the latest release [here](https://github.com/RyanHx/AmazonEbookGetter/releases/download/v1.0.0/AmazonEbookGetter.zip)
+Download the latest release [here](https://github.com/RyanHx/AmazonEbookGetter/releases/download/v1.0.1/AmazonEbookGetter.zip)
 1. You'll need Firefox installed
 2. You may need the [latest .NET Framework runtime](https://dotnet.microsoft.com/download/dotnet-framework/net48) (at the time of writing)
 3. This is only for users of the .co.uk Amazon domain!
