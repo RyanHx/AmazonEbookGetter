@@ -61,8 +61,8 @@ namespace AmazonEbookGetter
         public void Run(CancellationToken token)
         {
             while (true)
-            {               
-                Console.ForegroundColor = ConsoleColor.Yellow;                
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Press any key to cancel...");
                 LinksList.Clear();
                 FindEbooks();
@@ -102,13 +102,10 @@ namespace AmazonEbookGetter
         private void FindEbooks()
         {
             var EbookElementList = driver.FindElement(By.CssSelector("div.s-result-list:nth-child(1)")).FindElements(By.XPath("./div"));
-            foreach (var ebook in EbookElementList)
+            for (int i = 0; i < EbookElementList.Count - 1; i++)
             {
-                if (EbookElementList.IndexOf(ebook) != EbookElementList.Count - 1)
-                {
-                    var link = ebook.FindElement(By.XPath($"./ div / span / div / div / div[2] / div[2] / div / div[1] / div / div / div[1] / h2 / a")).GetAttribute("href");
-                    LinksList.Add(link.Replace(".com", ".co.uk"));
-                }
+                var link = EbookElementList[i].FindElement(By.XPath($"./ div / span / div / div / div[2] / div[2] / div / div[1] / div / div / div[1] / h2 / a")).GetAttribute("href");
+                LinksList.Add(link.Replace(".com", ".co.uk"));
             }
         }
 
@@ -123,17 +120,20 @@ namespace AmazonEbookGetter
                 {
                     return;
                 }
+                // Create 5 second wait to prevent flagging from Amazon
                 Stopwatch sw = Stopwatch.StartNew();
                 while (sw.Elapsed < TimeSpan.FromSeconds(5))
                 {
                     continue;
                 }
+
                 driver.Url = EbookLink;
                 try
                 {
                     var KindlePrice = driver.FindElement(By.CssSelector(".kindle-price")).FindElement(By.XPath("./td[2]/span")).Text;
                     if (KindlePrice.Equals("£0.00"))
                     {
+                        // Try to find the "Saved £X.YZ (100%)" element under the price to keep a counter of money saved
                         try
                         {
                             string saved = driver.FindElement(By.CssSelector(".kindle-price")).FindElement(By.XPath("./td[2]/p")).Text;
@@ -143,8 +143,8 @@ namespace AmazonEbookGetter
                                 MoneySaved += amount;
                             }
                         }
-                        catch (Exception) { };
-                        driver.FindElement(By.CssSelector("#one-click-button")).Click();
+                        catch (Exception) { }; // Not worried if it fails
+                        driver.FindElement(By.CssSelector("#one-click-button")).Click(); // Click the buy button
                     }
                 }
                 catch (NoSuchElementException)
@@ -154,6 +154,11 @@ namespace AmazonEbookGetter
             }
         }
 
+        /// <summary>
+        /// Finds the "Next" button at the bottom of the page and outputs the url link to <paramref name="nextUrl"/>. Returns true if it's found, false otherwise.
+        /// </summary>
+        /// <param name="nextUrl">Link to next page if it's found. Empty string otherwise.</param>
+        /// <returns>True if the next page url is found (there is a next page), false otherwise</returns>
         private bool FindNextPageButton(out string nextUrl)
         {
             try
@@ -168,11 +173,18 @@ namespace AmazonEbookGetter
             }
         }
 
+        /// <summary>
+        /// Quit the Selenium driver
+        /// </summary>
         public void CloseBrowser()
         {
             driver.Quit();
         }
 
+        /// <summary>
+        /// Saves the latest page of ebooks to a file "url.txt" in the working directory, for retrieval next time the program's run.
+        /// </summary>
+        /// <param name="url">Url written into url.txt</param>
         public void SaveLatestUrl(string url)
         {
             string path = Environment.CurrentDirectory + "\\url.txt";
@@ -190,7 +202,7 @@ namespace AmazonEbookGetter
             if (File.Exists(path))
             {
                 var temp = File.ReadAllText(path).Trim();
-                if(Uri.IsWellFormedUriString(temp, UriKind.Absolute))
+                if (Uri.IsWellFormedUriString(temp, UriKind.Absolute))
                 {
                     url = temp;
                     return true;
@@ -201,7 +213,7 @@ namespace AmazonEbookGetter
                     SaveLatestUrl(url);
                     return true;
                 }
-                
+
             }
             url = string.Empty;
             return false;
