@@ -16,7 +16,8 @@ I also recommend setting up a rule in your email inbox that auto-deletes order c
 3. It'll take you to the Amazon login page - when signing in remember to tick "Keep me signed in" so the script doesn't fail halfway through.
 4. Once logged in, press any key in the console and it'll start!
 
-There's roughly 60 pages of ebooks to go through, so at any time you can press a key in the console to cancel the script; it'll save the latest page it was on to start again from where you left off.
+### Cancelling the script midway
+At any time you can press a key in the console to cancel the script; it'll save the latest page it was on to start again from where you left off.
 
 If you do want to close the program, please use the "Press any key to cancel/finish" feature! It'll ensure the Firefox browser and Selenium driver is closed cleanly.
 
